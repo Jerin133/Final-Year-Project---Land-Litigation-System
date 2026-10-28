@@ -22,16 +22,44 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false
-      ; (async () => {
+    let retryTimer = null
+
+    const fetchStats = async (attempt = 1) => {
+      try {
         const [c, v] = await Promise.allSettled([caseApi.search({}), landApi.villages()])
         if (cancelled) return
-        setStats({
-          cases: c.status === 'fulfilled' ? c.value.count : null,
-          villages: v.status === 'fulfilled' ? v.value.villages.length : null,
-          surveys: v.status === 'fulfilled' ? v.value.villages.reduce((a, x) => a + x.survey_count, 0) : null,
-        })
-      })()
-    return () => { cancelled = true }
+
+        const casesVal = c.status === 'fulfilled' ? c.value?.count : null
+        const villagesVal = v.status === 'fulfilled' ? v.value?.villages?.length : null
+        const surveysVal = v.status === 'fulfilled' ? v.value?.villages?.reduce((a, x) => a + (x.survey_count || 0), 0) : null
+
+        setStats((prev) => ({
+          cases: casesVal ?? prev.cases,
+          villages: villagesVal ?? prev.villages,
+          surveys: surveysVal ?? prev.surveys,
+        }))
+
+        // If either API didn't succeed (e.g. Render backend is waking up), retry up to 4 times
+        if ((casesVal == null || villagesVal == null) && attempt < 5) {
+          retryTimer = setTimeout(() => {
+            if (!cancelled) fetchStats(attempt + 1)
+          }, 3500)
+        }
+      } catch {
+        if (!cancelled && attempt < 5) {
+          retryTimer = setTimeout(() => {
+            if (!cancelled) fetchStats(attempt + 1)
+          }, 3500)
+        }
+      }
+    }
+
+    fetchStats()
+
+    return () => {
+      cancelled = true
+      if (retryTimer) clearTimeout(retryTimer)
+    }
   }, [])
 
   const show = (n) => (n == null ? '—' : n.toLocaleString('en-IN'))
