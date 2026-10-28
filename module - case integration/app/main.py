@@ -224,9 +224,15 @@ def case_pdf(case_id: str, language: str = "english"):
 
 @app.get("/ollama/status")
 def ollama_status():
-    """Lets the frontend check whether an LLM/Ollama service is reachable.
-    On cloud deployments or client devices without Ollama, provides the
-    built-in UniGaia LegalNLP engine so summaries work everywhere."""
+    """Lets the frontend check whether an LLM/Ollama service is reachable."""
+    groq_key = os.environ.get("GROQ_API_KEY", "").strip()
+    if groq_key:
+        return {
+            "available": True,
+            "models": ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
+            "default_model": "llama-3.1-8b-instant",
+            "engine": "groq",
+        }
     try:
         models = list_models()
         model = default_model()
