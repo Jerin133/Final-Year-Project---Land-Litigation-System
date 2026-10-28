@@ -17,6 +17,7 @@ pip install --prefer-binary \
 pip install \
     fastapi==0.115.0 \
     "uvicorn[standard]==0.30.6" \
+    python-multipart>=0.0.9 \
     pdfplumber==0.11.4 \
     requests==2.32.3
 
