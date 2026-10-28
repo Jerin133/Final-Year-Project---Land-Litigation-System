@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kudumiyampatti Land Litigation Records</title>
+<style>
+  :root{
+    --paper:#F6F3EC; --ink:#1E2A38; --ink-soft:#4A5568; --line:#D8D2C4;
+    --card:#FFFDF8; --accent:#8B3A3A; --pending:#B7791F; --disposed:#2F6B4F;
+    --appeal:#345E82; --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --serif: Georgia, "Noto Serif Tamil", "Times New Roman", serif;
+    --sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    line-height:1.5;
+  }
+  header{
+    background:var(--ink); color:var(--paper); padding:20px 24px;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;
+  }
+  header h1{
+    font-family:var(--serif); font-weight:400; font-size:1.5rem; margin:0 0 4px;
+  }
+  header p{margin:0; color:#C7C1B3; font-size:0.9rem; max-width:640px;}
+  .ai-note{
+    font-size:0.78rem; color:#C7C1B3; border:1px solid #4A5568; border-radius:4px;
+    padding:8px 12px; max-width:260px; background:#26313F;
+  }
+  .ai-note strong{color:var(--paper); display:block; margin-bottom:2px;}
+  .banner{
+    background:#F1E4C9; border-bottom:1px solid #D8B978; color:#6B4E16;
+    padding:8px 24px; font-size:0.85rem; text-align:center;
+  }
+  main{max-width:880px; margin:0 auto; padding:24px;}
+  .status-line{font-size:0.85rem; color:var(--ink-soft); margin-bottom:18px;}
+  .status-line.error{color:var(--accent);}
+  .panel{
+    background:var(--card); border:1px solid var(--line); border-radius:6px;
+    padding:20px; margin-bottom:24px;
+  }
+  .panel h2{font-family:var(--serif); font-weight:400; font-size:1.05rem; margin:0 0 14px;}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;}
+  .field{display:flex; flex-direction:column; gap:4px; flex:1; min-width:140px;}
+  .field label{font-size:0.78rem; color:var(--ink-soft);}
+  .field input, .field select{
+    padding:8px 10px; border:1px solid var(--line); border-radius:4px; font-size:0.92rem;
+    background:#fff; color:var(--ink); font-family:var(--sans);
+  }
+  button{
+    background:var(--ink); color:var(--paper); border:none; border-radius:4px;
+    padding:9px 18px; font-size:0.9rem; cursor:pointer;
+  }
+  button:hover{background:#324255;}
+  button.ghost{
+    background:transparent; color:var(--ink); border:1px solid var(--line);
+  }
+  button.ghost:hover{background:#EFEAE0;}
+  .advanced{margin-top:14px; display:none;}
+  .advanced.open{display:block;}
+  .toggle-link{
+    background:none; border:none; color:var(--ink-soft); text-decoration:underline;
+    cursor:pointer; font-size:0.82rem; padding:0; margin-top:10px;
+  }
+  .lang-toggle{display:flex; gap:6px;}
+  .lang-toggle button{
+    background:#26313F; padding:6px 12px; font-size:0.82rem;
+  }
+  .lang-toggle button.active{background:var(--accent);}
+  .case-card{
+    background:var(--card); border:1px solid var(--line); border-left:4px solid var(--ink-soft);
+    border-radius:4px; padding:18px 20px; margin-bottom:16px;
+  }
+  .case-card.status-pending{border-left-color:var(--pending);}
+  .case-card.status-disposed{border-left-color:var(--disposed);}
+  .case-card.status-appeal{border-left-color:var(--appeal);}
+  .case-top{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
+  .case-id{font-family:var(--mono); font-size:0.82rem; color:var(--ink-soft);}
+  .pills{display:flex; gap:6px; flex-wrap:wrap;}
+  .pill{
+    font-size:0.74rem; padding:3px 9px; border-radius:99px; border:1px solid var(--line);
+    color:var(--ink-soft); white-space:nowrap;
+  }
+  .pill.status{color:#fff; border:none;}
+  .pill.status.pending{background:var(--pending);}
+  .pill.status.disposed{background:var(--disposed);}
+  .pill.status.appeal{background:var(--appeal);}
+  .parties{
+    font-family:var(--serif); font-size:1.15rem; margin:12px 0 10px;
+  }
+  .parties .vs{color:var(--ink-soft); font-size:0.85rem; margin:0 8px; font-family:var(--sans);}
+  .meta-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:10px 16px;
+    font-size:0.84rem; margin:12px 0; padding:12px 0; border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .meta-grid div span{display:block; color:var(--ink-soft); font-size:0.72rem;}
+  .paragraphs{margin-top:14px; font-size:0.92rem;}
+  .paragraphs p{margin:0 0 10px;}
+  .paragraphs p b{color:var(--ink-soft); font-weight:600; margin-right:4px;}
+  .card-footer{
+    display:flex; justify-content:space-between; align-items:center; margin-top:12px;
+    flex-wrap:wrap; gap:8px;
+  }
+  .pdf-links a{
+    font-size:0.82rem; color:var(--ink); margin-right:14px; text-decoration:underline;
+  }
+  details{font-size:0.78rem; color:var(--ink-soft);}
+  details pre{
+    background:#F1EEE5; padding:8px; border-radius:4px; overflow-x:auto; font-family:var(--mono);
+    font-size:0.72rem;
+  }
+  .empty{color:var(--ink-soft); font-size:0.9rem; padding:20px 0;}
+  .ai-summary{
+    background:#EFEAF5; border:1px solid #C9BEE0; border-radius:4px; padding:12px 14px;
+    margin:12px 0; font-size:0.9rem;
+  }
+  .ai-summary .ai-label{
+    font-size:0.72rem; color:#5B4E7A; text-transform:none; margin-bottom:6px; display:block;
+  }
+  .summarize-btn{
+    background:#5B4E7A; font-size:0.82rem; padding:7px 14px;
+  }
+  .summarize-btn:hover{background:#473C63;}
+  .summarize-btn:disabled{background:#A79FBD; cursor:wait;}
+</style>
+</head>
+<body>
+
+<div class="banner">⚠ All case records shown are SYNTHETIC test data — not official court records, judgments or CNR documents.</div>
+
+<header>
+  <div>
+    <h1>Kudumiyampatti Land Litigation Records</h1>
+    <p>Search by survey number to retrieve case details read directly from the original court-case PDFs, in English and Tamil.</p>
+  </div>
+</header>
+
+<main>
+  <p class="status-line" id="healthLine">Checking server…</p>
+
+  <div class="panel">
+    <h2>Search by survey number</h2>
+    <div class="row">
+      <div class="field">
+        <label for="surveyNo">Survey number</label>
+        <input id="surveyNo" placeholder="e.g. 71">
+      </div>
+      <div class="field">
+        <label for="subdivision">Subdivision (optional)</label>
+        <input id="subdivision" placeholder="e.g. 1J4">
+      </div>
+      <button onclick="searchBySurvey()">Search</button>
+    </div>
+
+    <button class="toggle-link" onclick="toggleAdvanced()">Or search by party name, court, status, dispute type or village ▾</button>
+    <div class="advanced" id="advancedPanel">
+      <div class="row">
+        <div class="field"><label for="party">Party name</label><input id="party" placeholder="petitioner or respondent"></div>
+        <div class="field"><label for="village">Village</label><input id="village" placeholder="e.g. Kudumiyampatti"></div>
+        <div class="field"><label for="court">Court</label><input id="court" placeholder="e.g. Sub Court"></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status"><option value="">Any</option><option>Pending</option><option>Disposed</option><option>Appeal Pending</option></select>
+        </div>
+        <div class="field">
+          <label for="disputeType">Dispute type</label>
+          <select id="disputeType">
+            <option value="">Any</option>
+            <option>Boundary dispute</option><option>Encroachment</option><option>Ownership</option>
+            <option>Partition</option><option>Inheritance</option><option>Government land</option><option>Patta issue</option>
+          </select>
+        </div>
+        <button class="ghost" onclick="searchAdvanced()">Search all cases</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+    <p class="status-line" id="resultCount" style="margin:0;"></p>
+    <div class="row" style="gap:16px;">
+      <div class="field" style="min-width:160px;">
+        <label for="modelSelect">Summarize with (Ollama)</label>
+        <select id="modelSelect"><option value="">Checking Ollama…</option></select>
+      </div>
+      <div class="lang-toggle">
+        <button id="langEn" class="active" onclick="setLang('english')">English</button>
+        <button id="langTa" onclick="setLang('tamil')">தமிழ்</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+</main>
+
+<script>
+const API = ""; // same origin as this page
+let currentLang = "english";
+let lastCases = [];
+
+async function checkHealth(){
+  try{
+    const r = await fetch(API + "/health");
+    const d = await r.json();
+    document.getElementById("healthLine").textContent =
+      `Connected — ${d.records_indexed} cases indexed live from the PDF folders (no spreadsheet data store).`;
+  }catch(e){
+    document.getElementById("healthLine").textContent =
+      "Could not reach the API. Is uvicorn running on this same address?";
+    document.getElementById("healthLine").classList.add("error");
+  }
+}
+checkHealth();
+
+async function checkOllama(){
+  const sel = document.getElementById("modelSelect");
+  try{
+    const r = await fetch(API + "/ollama/status");
+    const d = await r.json();
+    sel.innerHTML = "";
+    if(d.available && d.models.length){
+      for(const m of d.models){
+        const opt = document.createElement("option");
+        opt.value = m; opt.textContent = m;
+        if(m === d.default_model) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    } else {
+      sel.innerHTML = '<option value="">Ollama not available</option>';
+      sel.disabled = true;
+    }
+  }catch(e){
+    sel.innerHTML = '<option value="">Ollama not available</option>';
+    sel.disabled = true;
+  }
+}
+checkOllama();
+
+function toggleAdvanced(){
+  document.getElementById("advancedPanel").classList.toggle("open");
+}
+
+function setLang(lang){
+  currentLang = lang;
+  document.getElementById("langEn").classList.toggle("active", lang === "english");
+  document.getElementById("langTa").classList.toggle("active", lang === "tamil");
+  render();
+}
+
+async function searchBySurvey(){
+  const sn = document.getElementById("surveyNo").value.trim();
+  if(!sn){ alert("Enter a survey number."); return; }
+  const sub = document.getElementById("subdivision").value.trim();
+  let url = API + "/survey/" + encodeURIComponent(sn);
+  if(sub) url += "?subdivision=" + encodeURIComponent(sub);
+  await runSearch(url);
+}
+
+async function searchAdvanced(){
+  const params = new URLSearchParams();
+  const map = {party:"party", village:"village", court:"court", status:"status", disputeType:"dispute_type"};
+  for(const [id, key] of Object.entries(map)){
+    const v = document.getElementById(id).value.trim();
+    if(v) params.set(key, v);
+  }
+  await runSearch(API + "/cases/search?" + params.toString());
+}
+
+async function runSearch(url){
+  const countEl = document.getElementById("resultCount");
+  const resultsEl = document.getElementById("results");
+  countEl.textContent = "Searching…";
+  resultsEl.innerHTML = "";
+  try{
+    const r = await fetch(url);
+    const d = await r.json();
+    if(!r.ok){
+      countEl.textContent = d.detail || "No results.";
+      lastCases = [];
+      render();
+      return;
+    }
+    lastCases = d.cases || [];
+    countEl.textContent = `${d.count} case(s) found.`;
+    // /cases/search returns summaries only - fetch full detail per case
+    if(lastCases.length && !lastCases[0].documents){
+      const full = await Promise.all(lastCases.map(c => fetch(API + "/cases/" + c.case_id).then(r => r.json())));
+      lastCases = full;
+    }
+    render();
+  }catch(e){
+    countEl.textContent = "Search failed — check the server is running.";
+  }
+}
+
+function statusClass(statusEn){
+  if(!statusEn) return "";
+  const s = statusEn.toLowerCase();
+  if(s.includes("dispos")) return "disposed";
+  if(s.includes("appeal")) return "appeal";
+  return "pending";
+}
+
+function render(){
+  const resultsEl = document.getElementById("results");
+  resultsEl.innerHTML = "";
+  if(!lastCases.length){
+    resultsEl.innerHTML = '<p class="empty">No results yet — search by survey number above.</p>';
+    return;
+  }
+  for(const c of lastCases){
+    const sc = statusClass(c.status && c.status.english);
+    const statusLabel = c.status ? (currentLang === "english" ? c.status.english : c.status.tamil) : "";
+    const disputeLabel = c.dispute_type ? (currentLang === "english" ? c.dispute_type.english : c.dispute_type.tamil) : "";
+    const doc = c.documents ? c.documents[currentLang] : null;
+    const paras = doc ? doc.paragraphs : null;
+
+    const card = document.createElement("div");
+    card.className = "case-card status-" + sc;
+
+    let paraHtml = "";
+    if(paras){
+      for(const num of Object.keys(paras).sort((a,b)=>a-b)){
+        paraHtml += `<p><b>${num}.</b>${paras[num]}</p>`;
+      }
+    } else {
+      paraHtml = `<p class="empty">Full text not loaded — try the search again.</p>`;
+    }
+
+    const pdfLinks = [];
+    if(c.documents && c.documents.english) pdfLinks.push(`<a href="${API}/cases/${c.case_id}/pdf?language=english" target="_blank">Download English PDF</a>`);
+    if(c.documents && c.documents.tamil) pdfLinks.push(`<a href="${API}/cases/${c.case_id}/pdf?language=tamil" target="_blank">Download Tamil PDF</a>`);
+
+    card.innerHTML = `
+      <div class="case-top">
+        <span class="case-id">${c.case_id}</span>
+        <div class="pills">
+          <span class="pill status ${sc}">${statusLabel}</span>
+          <span class="pill">${disputeLabel}</span>
+        </div>
+      </div>
+      <div class="parties">${c.petitioner || "—"} <span class="vs">vs</span> ${c.respondent || "—"}</div>
+      <div class="meta-grid">
+        <div><span>Survey / Subdivision</span>${c.survey_no || "—"} / ${c.subdivision || "—"}</div>
+        <div><span>Court</span>${c.court || "—"}</div>
+        <div><span>Village / Taluk / District</span>${c.village || "—"}, ${c.taluk || "—"}, ${c.district || "—"}</div>
+        <div><span>Filing date</span>${c.filing_date || "—"}</div>
+        <div><span>Hearings / Adjournments</span>${c.hearing_count ?? "—"} / ${c.adjournment_count ?? "—"}</div>
+        <div><span>Appeal indicator</span>${c.appeal_indicator === true ? "Yes" : c.appeal_indicator === false ? "No" : "—"}</div>
+        <div><span>Disposal date</span>${c.disposal_date || "Not disposed"}</div>
+      </div>
+      <div id="risk-${c.case_id}"></div>
+      <div class="paragraphs">${paraHtml}</div>
+      <div id="summary-${c.case_id}"></div>
+      <div class="card-footer">
+        <div class="pdf-links">${pdfLinks.join("")}</div>
+        <button class="summarize-btn" onclick="summarizeCase('${c.case_id}', this)">Summarize with AI (Ollama)</button>
+      </div>
+      <div class="card-footer">
+        <details>
+          <summary>Extraction detail</summary>
+          <pre>${c.extraction ? JSON.stringify(c.extraction, null, 2) : "n/a"}</pre>
+        </details>
+      </div>
+    `;
+    resultsEl.appendChild(card);
+  }
+  if (window.loadRisk) loadRisk(lastCases);
+}
+
+async function summarizeCase(caseId, btn){
+  const model = document.getElementById("modelSelect").value;
+  const target = document.getElementById("summary-" + caseId);
+  btn.disabled = true;
+  btn.textContent = "Summarizing… (can take up to a minute on first run)";
+  target.innerHTML = "";
+  try{
+    let url = API + "/cases/" + caseId + "/summary";
+    if(model) url += "?model=" + encodeURIComponent(model);
+    const r = await fetch(url);
+    const d = await r.json();
+    if(!r.ok){
+      target.innerHTML = `<div class="ai-summary" style="border-color:#D8A0A0;background:#F5E9E9;">
+        <span class="ai-label">AI summary failed</span>${d.detail || "Unknown error"}</div>`;
+    } else {
+      target.innerHTML = `
+        <div class="ai-summary">
+          <span class="ai-label">AI summary — generated locally by Ollama (${d.model}), not part of the verified extraction above</span>
+          <p><strong>English:</strong> ${d.summary.english}</p>
+          <p style="margin-top:8px;"><strong>தமிழ்:</strong> ${d.summary.tamil}</p>
+        </div>`;
+    }
+  }catch(e){
+    target.innerHTML = `<div class="ai-summary" style="border-color:#D8A0A0;background:#F5E9E9;">
+      <span class="ai-label">AI summary failed</span>Request failed — check Ollama and the server are running.</div>`;
+  }
+  btn.disabled = false;
+  btn.textContent = "Summarize with AI (Ollama)";
+}
+</script>
+<script src="/risk.js"></script>
+</body>
+</html>

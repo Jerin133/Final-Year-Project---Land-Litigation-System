@@ -1,0 +1,9 @@
+=== PATTA 1 - H KALLADIPATTY OWNERS ===
+owner_name: அம்மாசியம்மாள்
+owner_name has spaces: False
+owner_name repr: 'அம்மாசியம்மாள்'
+relative_name: சின்னத்தம்பி
+relative_name has spaces: False
+relative_name repr: 'சின்னத்தம்பி'
+relation: மனைவி
+---

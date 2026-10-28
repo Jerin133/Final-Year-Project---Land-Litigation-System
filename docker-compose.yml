@@ -1,0 +1,66 @@
+services:
+  # Module 2: Court Case Retrieval API
+  case-api:
+    build:
+      context: ./"module - case integration"
+      dockerfile: Dockerfile
+    container_name: unigaia-case-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+    restart: unless-stopped
+
+  # Module 1: Land Records Bridge API
+  land-bridge:
+    build:
+      context: ./land-litigation-dashboard/bridge
+      dockerfile: Dockerfile
+    container_name: unigaia-land-bridge
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - HOST=0.0.0.0
+      - LAND_DB_PATH=/app/module1_land_record_integration/project/db/land_records.db
+    volumes:
+      - ./module1_land_record_integration:/app/module1_land_record_integration
+    restart: unless-stopped
+
+  # Module 6: GIS Integration API
+  gis-api:
+    build:
+      context: ./"GIS Integration"
+      dockerfile: Dockerfile
+    container_name: unigaia-gis-api
+    ports:
+      - "8002:8002"
+    environment:
+      - PORT=8002
+      - HOST=0.0.0.0
+      - LAND_DB_PATH=/app/module1_land_record_integration/project/db/land_records.db
+    volumes:
+      - ./"GIS Integration":/app
+      - ./module1_land_record_integration:/app/module1_land_record_integration
+    restart: unless-stopped
+
+  # Frontend Web Application
+  frontend:
+    build:
+      context: ./land-litigation-dashboard/frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_CASE_API=http://localhost:8000
+        - VITE_LAND_API=http://localhost:8001
+        - VITE_GIS_API=http://localhost:8002
+        - VITE_SUPABASE_URL=https://dnlnehehjebzveisvnsy.supabase.co
+        - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRubG5laGVoamVienZlaXN2bnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NDcyNDQsImV4cCI6MjEwNzAyMzI0NH0.SGjNswR10ZawzIa6YI5J08STxX26HWZR1tUJdT5HMww
+    container_name: unigaia-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - case-api
+      - land-bridge
+      - gis-api
+    restart: unless-stopped
