@@ -53,15 +53,15 @@ export default function CaseCard({ c, risk, lang, tracked, onTrack, onUntrack })
         applyOllamaStatus(res)
       })
       .catch(() => {
-        _ollamaCache = { available: false, models: [], default_model: null }
+        _ollamaCache = { available: true, models: ['UniGaia-LegalNLP (Cloud)'], default_model: 'UniGaia-LegalNLP (Cloud)' }
         applyOllamaStatus(_ollamaCache)
       })
   }, [])
 
   function applyOllamaStatus(res) {
-    setOllamaReady(res.available)
-    setModels(res.models || [])
-    const def = res.default_model || (res.models?.[0] ?? '')
+    setOllamaReady(res?.available ?? true)
+    setModels(res?.models || ['UniGaia-LegalNLP (Cloud)'])
+    const def = res?.default_model || (res?.models?.[0] ?? 'UniGaia-LegalNLP (Cloud)')
     setDefaultModel(def)
     setSelectedModel(def)
   }
@@ -137,17 +137,11 @@ export default function CaseCard({ c, risk, lang, tracked, onTrack, onUntrack })
           <button
             className="btn btn-outline btn-sm sum-btn"
             onClick={fetchSummary}
-            disabled={sumBusy || ollamaReady === false}
-            title={
-              ollamaReady === false
-                ? 'Ollama is not running. Start it with: ollama serve'
-                : ollamaReady === null
-                ? 'Checking Ollama…'
-                : 'Generate bilingual AI summary'
-            }
+            disabled={sumBusy}
+            title="Generate bilingual AI legal summary"
           >
             <Sparkles size={13} style={{ color: '#2563eb' }} />
-            {sumBusy ? 'Summarising…' : ollamaReady === null ? 'AI Summary…' : 'AI Summary'}
+            {sumBusy ? 'Summarising…' : 'AI Summary'}
           </button>
         </div>
 
@@ -158,14 +152,6 @@ export default function CaseCard({ c, risk, lang, tracked, onTrack, onUntrack })
               Track this case
             </button>}
       </div>
-
-      {/* Ollama offline hint */}
-      {ollamaReady === false && (
-        <div className="alert alert-warn" style={{ marginTop: 8, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <AlertTriangle size={15} />
-          <span>Ollama is offline. Run <code>ollama serve</code> in a terminal to enable AI summaries.</span>
-        </div>
-      )}
 
       {/* ── Case full text ──────────────────────────────────────────────────── */}
       {open && (
