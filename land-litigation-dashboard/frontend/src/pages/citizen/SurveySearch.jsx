@@ -436,42 +436,65 @@ export default function SurveySearch({ villages, lang, setLang, trackedIds, onTr
           }
         }
 
-        // Query GIS cadastral polygons & full village collection for ALL linked surveys
-        let gisFeature = null
-        let gisFeatures = []
-        let gisVillageCollection = null
-        if (linkedSurveys && linkedSurveys.length > 0) {
-          try {
-            const vList = await gisApi.villages().catch(() => [])
-            const matchedV = vList.find((v) => v.name?.toLowerCase() === village.toLowerCase() || v.slug === village.toLowerCase())
-            const vSlug = matchedV ? matchedV.slug : undefined
-
-            const [polyRes, ...surveyResults] = await Promise.allSettled([
-              gisApi.polygons(vSlug),
-              ...linkedSurveys.map((sNo) => gisApi.search(sNo, vSlug)),
-            ])
-
-            if (polyRes.status === 'fulfilled' && polyRes.value?.type === 'FeatureCollection') {
-              gisVillageCollection = polyRes.value
-            }
-
-            for (const r of surveyResults) {
-              if (r.status === 'fulfilled' && r.value?.type === 'Feature') {
-                gisFeatures.push(r.value)
-              }
-            }
-            if (gisFeatures.length === 1) {
-              gisFeature = gisFeatures[0]
-            } else if (gisFeatures.length > 1) {
-              gisFeature = gisFeatures
-            }
-          } catch {
-            /* GIS is optional */
-          }
-        }
-
-        setResult({ mode: 'patta', village, patta: targetVal, land, landError, caseError, cases, risk, gisFeature, gisFeatures, gisVillageCollection })
+        // Show land & court case results immediately (<1s) while GIS loads progressively
+        setResult({
+          mode: 'patta',
+          village,
+          patta: targetVal,
+          land,
+          landError,
+          caseError,
+          cases,
+          risk,
+          gisFeature: null,
+          gisFeatures: [],
+          gisVillageCollection: null,
+          gisLoading: linkedSurveys.length > 0,
+        })
         setSearch({ district, taluk, village, patta: targetVal, survey: linkedSurveys[0] || '' })
+        setBusy(false)
+
+        // Query GIS cadastral polygons & full village collection asynchronously in background
+        if (linkedSurveys && linkedSurveys.length > 0) {
+          ;(async () => {
+            try {
+              const vList = await gisApi.villages().catch(() => [])
+              const matchedV = vList.find((v) => v.name?.toLowerCase() === village.toLowerCase() || v.slug === village.toLowerCase())
+              const vSlug = matchedV ? matchedV.slug : undefined
+
+              const [polyRes, ...surveyResults] = await Promise.allSettled([
+                gisApi.polygons(vSlug),
+                ...linkedSurveys.map((sNo) => gisApi.search(sNo, vSlug)),
+              ])
+
+              let gisVillageCollection = null
+              let gisFeatures = []
+              let gisFeature = null
+
+              if (polyRes.status === 'fulfilled' && polyRes.value?.type === 'FeatureCollection') {
+                gisVillageCollection = polyRes.value
+              }
+
+              for (const r of surveyResults) {
+                if (r.status === 'fulfilled' && r.value?.type === 'Feature') {
+                  gisFeatures.push(r.value)
+                }
+              }
+              if (gisFeatures.length === 1) {
+                gisFeature = gisFeatures[0]
+              } else if (gisFeatures.length > 1) {
+                gisFeature = gisFeatures
+              }
+
+              setResult((prev) => {
+                if (!prev || prev.patta !== targetVal || prev.village !== village) return prev
+                return { ...prev, gisFeature, gisFeatures, gisVillageCollection, gisLoading: false }
+              })
+            } catch {
+              setResult((prev) => (prev ? { ...prev, gisLoading: false } : prev))
+            }
+          })()
+        }
       } else {
         // Search by Survey Number
         const [landRes, caseRes] = await Promise.allSettled([landApi.land(village, targetVal), caseApi.survey(targetVal)])
@@ -493,31 +516,53 @@ export default function SurveySearch({ villages, lang, setLang, trackedIds, onTr
           }
         }
 
-        // Query GIS cadastral polygon & full village collection for this survey
-        let gisFeature = null
-        let gisFeatures = []
-        let gisVillageCollection = null
-        try {
-          const vList = await gisApi.villages().catch(() => [])
-          const matchedV = vList.find((v) => v.name?.toLowerCase() === village.toLowerCase() || v.slug === village.toLowerCase())
-          const vSlug = matchedV ? matchedV.slug : undefined
-          const [fRes, polyRes] = await Promise.allSettled([
-            gisApi.search(targetVal, vSlug),
-            gisApi.polygons(vSlug),
-          ])
-          if (fRes.status === 'fulfilled' && fRes.value?.type === 'Feature') {
-            gisFeature = fRes.value
-            gisFeatures = [fRes.value]
-          }
-          if (polyRes.status === 'fulfilled' && polyRes.value?.type === 'FeatureCollection') {
-            gisVillageCollection = polyRes.value
-          }
-        } catch {
-          /* GIS is optional */
-        }
-
-        setResult({ mode: 'survey', village, survey: targetVal, land, landError, caseError, cases, risk, gisFeature, gisFeatures, gisVillageCollection })
+        // Show land & court case results immediately (<1s) while GIS loads progressively
+        setResult({
+          mode: 'survey',
+          village,
+          survey: targetVal,
+          land,
+          landError,
+          caseError,
+          cases,
+          risk,
+          gisFeature: null,
+          gisFeatures: [],
+          gisVillageCollection: null,
+          gisLoading: true,
+        })
         setSearch({ district, taluk, village, survey: targetVal, patta: '' })
+        setBusy(false)
+
+        // Query GIS cadastral polygon & full village collection asynchronously in background
+        ;(async () => {
+          try {
+            const vList = await gisApi.villages().catch(() => [])
+            const matchedV = vList.find((v) => v.name?.toLowerCase() === village.toLowerCase() || v.slug === village.toLowerCase())
+            const vSlug = matchedV ? matchedV.slug : undefined
+            const [fRes, polyRes] = await Promise.allSettled([
+              gisApi.search(targetVal, vSlug),
+              gisApi.polygons(vSlug),
+            ])
+            let gisFeature = null
+            let gisFeatures = []
+            let gisVillageCollection = null
+            if (fRes.status === 'fulfilled' && fRes.value?.type === 'Feature') {
+              gisFeature = fRes.value
+              gisFeatures = [fRes.value]
+            }
+            if (polyRes.status === 'fulfilled' && polyRes.value?.type === 'FeatureCollection') {
+              gisVillageCollection = polyRes.value
+            }
+
+            setResult((prev) => {
+              if (!prev || prev.survey !== targetVal || prev.village !== village) return prev
+              return { ...prev, gisFeature, gisFeatures, gisVillageCollection, gisLoading: false }
+            })
+          } catch {
+            setResult((prev) => (prev ? { ...prev, gisLoading: false } : prev))
+          }
+        })()
       }
     } catch (err) {
       setError(err)
@@ -650,14 +695,24 @@ export default function SurveySearch({ villages, lang, setLang, trackedIds, onTr
           <Card
             title="Cadastral Map & Parcel Boundaries"
             right={
-              result.gisFeature ? (
+              result.gisLoading ? (
+                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                  Loading boundary map…
+                </span>
+              ) : result.gisFeature ? (
                 <span style={{ fontSize: '12px', color: '#0d9488', fontWeight: 600 }}>
                   WGS84 EPSG:4326 · Verified Boundary {Array.isArray(result.gisFeature) ? `(${result.gisFeature.length} Linked Parcels)` : ''}
                 </span>
               ) : null
             }
           >
-            {result.gisFeature || result.gisVillageCollection ? (
+            {result.gisLoading ? (
+              <div style={{ padding: '28px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', color: '#64748b' }}>
+                <div style={{ fontSize: '13.5px', color: '#475569', fontWeight: 500 }}>
+                  Fetching cadastral map &amp; polygon boundary…
+                </div>
+              </div>
+            ) : result.gisFeature || result.gisVillageCollection ? (
               <div>
                 <GisMap
                   featureCollection={result.gisVillageCollection}
